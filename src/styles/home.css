@@ -1,0 +1,86 @@
+/* ==========================================================
+   KISHOO - HOME: banner, marquee, deals, product cards
+   ========================================================== */
+/* banner images: full width, stacked with no gaps */
+.banner-stack a { display: block; }
+.banner-stack img { width: 100%; height: auto; }
+
+/* scrolling offer strip */
+.marquee { background: #970e71; color: var(--white); overflow: hidden; padding: 10px 0; }
+.marquee-inner { display: flex; width: max-content; animation: marquee 14s linear infinite; }
+.marquee-inner span { font-size: 16px; font-weight: 500; white-space: nowrap; padding: 0 22px; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* daily deals */
+.deals-head {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--white); padding: 12px; margin-top: 8px;
+}
+.deals-head p { display: flex; align-items: center; gap: 4px; font-size: 18px; font-weight: 700; color: #53536b; }
+.deals-bolt { display: inline-flex; }
+.deals-bolt svg { width: 20px; height: 24px; }
+.timer-pill.deals-timer {
+  gap: 4px; height: 24px; padding: 0 6px;
+  background: #ffe8dc; border: 1px solid #e9967a; border-radius: 4px;
+  color: #9b1747; font-size: 13px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap;
+}
+.timer-pill.deals-timer svg { width: 17px; height: 17px; }
+.timer-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #fdf0fa; color: var(--primary); border-radius: 6px;
+  padding: 4px 8px; font-size: 13px; font-weight: 600;
+}
+
+/* product grid */
+.products { background: var(--white); margin-top: 8px; padding-bottom: 8px; }
+.products > h4 { font-size: 20px; font-weight: 500; padding: 14px 12px 6px; }
+.product-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.product-card {
+  display: flex; flex-direction: column; border: 0.5px solid var(--border);
+  background: var(--white); min-width: 0; cursor: pointer;
+}
+.product-img { position: relative; aspect-ratio: 1 / 1; background: #f7f7fa; overflow: hidden; }
+.product-img img { width: 100%; height: 100%; object-fit: contain; }
+.tag {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  background: #570b47; color: var(--white); font-size: 10px; padding: 4px 7px; border-radius: 3px;
+  white-space: nowrap; animation: blinker 2s ease-in-out infinite;
+}
+@keyframes blinker { 50% { opacity: 0.35; } }
+.product-info { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.product-name {
+  font-size: 14px; font-weight: 400; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.price-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sell-price { font-size: 18px; font-weight: 700; color: var(--text); }
+.mrp { font-size: 13px; color: var(--muted); text-decoration: line-through; }
+.off { font-size: 13px; font-weight: 600; color: var(--green); }
+.price-row.big .sell-price { font-size: 24px; }
+.free-delivery {
+  align-self: flex-start; background: #f0f0f5; color: var(--text-2);
+  font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 2px 0;
+}
+.rating-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.rating {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--green); color: var(--white); font-weight: 600; font-size: 11px;
+  padding: 2px 6px; border-radius: 10px;
+}
+.timer-pill.card-timer {
+  justify-content: center; gap: 5px; width: 100%; height: 32px; margin: 6px 0 2px; padding: 0 6px;
+  background: #ffeadb; border: 1px solid #f6b48f; border-radius: 4px;
+  color: #9f2089; font-size: 16px; font-weight: 500; letter-spacing: 0.2px; white-space: nowrap;
+}
+.timer-pill.card-timer svg { flex-shrink: 0; }
+@media (max-width: 380px) {
+  .timer-pill.card-timer { font-size: 13px; gap: 3px; }
+  .timer-pill.card-timer svg { width: 16px; height: 16px; }
+}
+.buy-btn {
+  width: 100%; height: 45px; margin-top: auto; border-radius: 6px;
+  background: center center rgb(159, 32, 137); color: var(--white); font-weight: 600; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.buy-btn:active { background: var(--primary-dark); }
+.feed-spinner { margin: 30px auto; }

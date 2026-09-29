@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c53ead"/>
+      <stop offset=".45" stop-color="#9f2089"/>
+      <stop offset="1" stop-color="#570d48"/>
+    </linearGradient>
+    <linearGradient id="bag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd23f"/>
+      <stop offset="1" stop-color="#ff9d00"/>
+    </linearGradient>
+    <linearGradient id="bag2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff6fb5"/>
+      <stop offset="1" stop-color="#e0287a"/>
+    </linearGradient>
+    <linearGradient id="gift" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f3dcef"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#2a0624" flood-opacity=".35"/>
+    </filter>
+  </defs>
+
+  <rect width="1000" height="460" fill="url(#bg)"/>
+  <circle cx="900" cy="40" r="210" fill="#fff" opacity=".1"/>
+  <circle cx="760" cy="470" r="150" fill="#fff" opacity=".07"/>
+  <circle cx="60" cy="440" r="90" fill="#fff" opacity=".06"/>
+
+  <g fill="#ffd76a">
+    <path d="m590 70 6 16 16 6-16 6-6 16-6-16-16-6 16-6z"/>
+    <path d="m960 300 4 11 11 4-11 4-4 11-4-11-11-4 11-4z"/>
+    <path d="m640 380 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" opacity=".8"/>
+  </g>
+
+  <rect x="56" y="58" width="236" height="44" rx="22" fill="#ff9d00"/>
+  <text x="174" y="88" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="20" fill="#3b0030" letter-spacing="1">MEGA SALE IS LIVE</text>
+
+  <g font-family="Arial Black, Arial, sans-serif" font-weight="900" fill="#fff">
+    <text x="56" y="180" font-size="68">Up to 80% Off</text>
+    <text x="56" y="256" font-size="68">on Everything</text>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="26" fill="#fff" opacity=".92">
+    <text x="58" y="306">Buy 2 Get 1 Free on all products.</text>
+    <text x="58" y="340">Free delivery.</text>
+  </g>
+
+  <rect x="56" y="370" width="200" height="60" rx="12" fill="#fff"/>
+  <text x="156" y="410" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="24" fill="#9f2089">Shop Now</text>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(700 150) rotate(-8)">
+      <path d="M-40 -22 C-40 -70 40 -70 40 -22" stroke="#b36b00" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <rect x="-80" y="-30" width="160" height="200" rx="18" fill="url(#bag)"/>
+      <text y="95" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="56" fill="#fff">%</text>
+    </g>
+    <g transform="translate(850 225) rotate(10)">
+      <path d="M-32 -18 C-32 -58 32 -58 32 -18" stroke="#a0155a" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <rect x="-66" y="-24" width="132" height="168" rx="16" fill="url(#bag2)"/>
+      <text y="80" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="30" fill="#fff">SALE</text>
+    </g>
+    <g transform="translate(760 360)">
+      <rect x="-58" y="-40" width="116" height="80" rx="10" fill="url(#gift)"/>
+      <rect x="-64" y="-56" width="128" height="26" rx="8" fill="#fff"/>
+      <rect x="-10" y="-56" width="20" height="96" fill="#ff3f8e"/>
+      <path d="M0 -56 C-30 -90 -52 -66 -26 -56 M0 -56 C30 -90 52 -66 26 -56" stroke="#ff3f8e" stroke-width="9" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

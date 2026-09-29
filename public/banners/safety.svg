@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 310">
+  <rect width="960" height="310" fill="#fff"/>
+
+  <g transform="translate(36 40)">
+    <rect width="232" height="54" rx="12" fill="#5b4bdb"/>
+    <g transform="translate(8 5)">
+      <path d="M22 2 4 9v13c0 11 7.6 20.8 18 24 10.4-3.2 18-13 18-24V9L22 2Z" fill="#5b4bdb" stroke="#fff" stroke-width="3"/>
+      <path d="M16 14v18M16 23l10-9M18.8 21l8 11" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    <text x="60" y="36" font-family="Arial, sans-serif" font-size="25" fill="#fff">Kishoo Safe</text>
+  </g>
+
+  <text x="36" y="160" font-family="Arial, sans-serif" font-weight="700" font-size="38" fill="#2c2a6b">Your Safety, Our Priority</text>
+  <g font-family="Arial, sans-serif" font-size="26" fill="#3f3f63">
+    <text x="36" y="210">We make sure that your package</text>
+    <text x="36" y="246">is safe at every point of contact.</text>
+  </g>
+
+  <g transform="translate(640 0)">
+    <path d="M320 90 320 310 110 310Z" fill="#6c5ce7" opacity=".85"/>
+    <path d="M320 150 320 310 170 310Z" fill="#8e7cf0"/>
+
+    <rect x="40" y="200" width="92" height="84" rx="5" fill="#d9a066"/>
+    <path d="M40 200h92l-12-20H52Z" fill="#e8b67c"/>
+    <rect x="78" y="200" width="16" height="84" fill="#f06292" opacity=".85"/>
+
+    <rect x="160" y="212" width="24" height="84" rx="6" fill="#4a4a68"/>
+    <rect x="194" y="212" width="24" height="84" rx="6" fill="#4a4a68"/>
+    <path d="M150 128c0-17 15-28 39-28s39 11 39 28v96h-78Z" fill="#f06292"/>
+    <path d="M152 136 118 172l12 12 26-24" fill="#f06292"/>
+    <rect x="104" y="166" width="26" height="22" rx="6" fill="#29b6f6"/>
+    <path d="M220 132 244 76" stroke="#f06292" stroke-width="20" stroke-linecap="round"/>
+    <path d="M234 84 226 44l9-4 12 30 5-26 9 2-3 36Z" fill="#29b6f6"/>
+
+    <circle cx="189" cy="72" r="26" fill="#f5c7a9"/>
+    <path d="M161 64c0-20 13-31 28-31s28 11 28 31Z" fill="#e53935"/>
+    <path d="M212 62h22" stroke="#e53935" stroke-width="8" stroke-linecap="round"/>
+    <path d="M166 76h46v10c0 11-9 18-23 18s-23-7-23-18Z" fill="#4dd0e1"/>
+  </g>
+</svg>
