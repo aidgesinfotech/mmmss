@@ -12,7 +12,7 @@ const blankGateway = {
   paymentGateway: "upi",
   cashfreeAppId: "",
   cashfreeSecret: "",
-  cashfreeEnv: "production",
+  cashfreeMode: "",
 };
 
 export default function Settings() {
@@ -67,21 +67,17 @@ export default function Settings() {
         {s.paymentGateway === "cashfree" ? (
           <>
             <label className="adm-field">
-              <span>API Key</span>
-              <input value={s.cashfreeAppId} onChange={(e) => setS({ ...s, cashfreeAppId: e.target.value })} placeholder="Cashfree App ID" autoComplete="off" spellCheck={false} />
+              <span>App ID</span>
+              <input value={s.cashfreeAppId} onChange={(e) => setS({ ...s, cashfreeAppId: e.target.value })} placeholder="CASHFREE_APP_ID" autoComplete="off" spellCheck={false} />
             </label>
             <label className="adm-field">
               <span>Secret Key</span>
-              <input type="password" value={s.cashfreeSecret} onChange={(e) => setS({ ...s, cashfreeSecret: e.target.value })} placeholder="Cashfree secret" autoComplete="new-password" spellCheck={false} />
+              <input type="password" value={s.cashfreeSecret} onChange={(e) => setS({ ...s, cashfreeSecret: e.target.value })} placeholder="CASHFREE_SECRET_KEY" autoComplete="new-password" spellCheck={false} />
             </label>
-            <label className="adm-field">
-              <span>Environment</span>
-              <select value={s.cashfreeEnv} onChange={(e) => setS({ ...s, cashfreeEnv: e.target.value })}>
-                <option value="production">Live</option>
-                <option value="sandbox">Test</option>
-              </select>
-            </label>
-            <p className="adm-hint">Payment opens on Cashfree’s page. Only this API key and secret are needed — no domain whitelist.</p>
+            <p className="adm-hint">
+              Only the App ID and Secret Key are needed. Customers pay on Cashfree’s own page and come back here automatically.
+              {s.cashfreeMode && <> Mode: <strong>{s.cashfreeMode === "sandbox" ? "Test (sandbox)" : "Live"}</strong>, detected from the keys.</>}
+            </p>
           </>
         ) : (
           <>

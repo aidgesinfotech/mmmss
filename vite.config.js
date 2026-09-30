@@ -25,6 +25,6 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, loadEnv(mode, process.cwd(), ""));
   return {
     plugins: [react(), devApi()],
-    server: { port: 5173 },
+    server: { port: 5173, watch: { ignored: ["**/cashfree-code/**"] } },
   };
 });

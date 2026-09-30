@@ -76,7 +76,6 @@ export const DEFAULT_SETTINGS = {
   paymentGateway: "upi",
   cashfreeAppId: "",
   cashfreeSecret: "",
-  cashfreeEnv: "production",
 };
 
 export const DEFAULT_ADMIN = { username: "admin", password: "admin" };

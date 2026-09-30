@@ -241,10 +241,6 @@ export default function Payment() {
 
   const payCashfree = async () => {
     const phone = String(address.phone || "").replace(/\D/g, "").slice(-10);
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      setPayError("Enter a valid 10-digit mobile number on the address page.");
-      return;
-    }
     if (!settings.cashfreeReady) {
       setPayError("Cashfree is not set up yet.");
       return;
@@ -257,7 +253,7 @@ export default function Payment() {
       const res = await fetch("/api/pay/cashfree", {
         method: "POST",
         headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, amount, name: address.name || "Customer", phone }),
+        body: JSON.stringify({ orderId, amount, name: address.name || "", phone }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not start Cashfree");

@@ -1,6 +1,6 @@
 import { CATEGORIES } from "../src/data/store.js";
 import { createToken, readToken } from "./auth.js";
-import { createPaymentLink, fetchPaymentLink, linkIsPaid } from "./cashfree.js";
+import { cashfreeEnv, createOrder, customerFor, fetchOrder, orderIsPaid } from "./cashfree.js";
 import { DEFAULT_SETTINGS, db, getStore, seedStore } from "./db.js";
 
 class HttpError extends Error {
@@ -248,14 +248,9 @@ function settingsInput(b) {
     if (gateway !== "upi" && gateway !== "cashfree") fail(400, "Choose UPI or Cashfree");
     out.paymentGateway = gateway;
   }
-  if ("cashfreeEnv" in b) {
-    const env = String(b.cashfreeEnv);
-    if (env !== "sandbox" && env !== "production") fail(400, "Choose Test or Live for Cashfree");
-    out.cashfreeEnv = env;
-  }
   if ("cashfreeAppId" in b) {
     const appId = String(b.cashfreeAppId ?? "").trim();
-    if (appId && !/^[A-Za-z0-9_-]{4,128}$/.test(appId)) fail(400, "Invalid Cashfree API key");
+    if (appId && !/^[A-Za-z0-9_-]{4,128}$/.test(appId)) fail(400, "Invalid Cashfree App ID");
     out.cashfreeAppId = appId;
   }
   if ("cashfreeSecret" in b) {
@@ -269,21 +264,28 @@ function settingsInput(b) {
 async function loadSettings(storeId) {
   const [rows] = await db().query("SELECT setting_key, setting_value FROM settings WHERE store_id = ?", [storeId]);
   const s = { ...DEFAULT_SETTINGS, ...Object.fromEntries(rows.map((r) => [r.setting_key, r.setting_value ?? ""])) };
-  return {
+  const out = {
     upiId: s.upiId,
     ...Object.fromEntries(BOOL_KEYS.map((k) => [k, s[k] === "1"])),
     paymentGateway: s.paymentGateway === "cashfree" ? "cashfree" : "upi",
     cashfreeAppId: s.cashfreeAppId || "",
     cashfreeSecret: s.cashfreeSecret || "",
-    cashfreeEnv: s.cashfreeEnv === "sandbox" ? "sandbox" : "production",
   };
+  const keys = cashfreeKeys(out);
+  out.cashfreeMode = keys ? cashfreeEnv(keys.appId, keys.secret) : "";
+  return out;
+}
+
+// Cashfree keys are per store and come only from Admin > Settings.
+function cashfreeKeys(s) {
+  return s.cashfreeAppId && s.cashfreeSecret ? { appId: s.cashfreeAppId, secret: s.cashfreeSecret } : null;
 }
 
 function publicSettings(s) {
   const cashfree = s.paymentGateway === "cashfree";
   return {
     paymentGateway: cashfree ? "cashfree" : "upi",
-    cashfreeReady: cashfree && Boolean(s.cashfreeAppId && s.cashfreeSecret),
+    cashfreeReady: cashfree && Boolean(cashfreeKeys(s)),
     isGpayEnable: s.isGpayEnable,
     isPaytmEnable: s.isPaytmEnable,
     isPhonepeEnable: s.isPhonepeEnable,
@@ -404,8 +406,8 @@ async function adminRoutes(req, method, parts, store) {
     if (method === "PUT") {
       const patch = settingsInput(await readBody(req));
       const next = { ...(await loadSettings(store.id)), ...patch };
-      if (next.paymentGateway === "cashfree" && (!next.cashfreeAppId || !next.cashfreeSecret)) {
-        fail(400, "Cashfree API key and secret are required");
+      if (next.paymentGateway === "cashfree" && !cashfreeKeys(next)) {
+        fail(400, "Cashfree App ID and Secret Key are required");
       }
       const rows = Object.entries(patch).map(([k, v]) => [store.id, k, String(v)]);
       if (rows.length) {
@@ -439,31 +441,26 @@ function requestOrigin(req) {
 async function cashfreeCreds(store) {
   const s = await loadSettings(store.id);
   if (s.paymentGateway !== "cashfree") fail(400, "Cashfree is turned off");
-  if (!s.cashfreeAppId || !s.cashfreeSecret) fail(400, "Cashfree API key and secret are not set");
-  return s;
+  return cashfreeKeys(s) || fail(400, "Cashfree App ID and Secret Key are not set");
 }
 
 async function startCashfree(req, store) {
-  const s = await cashfreeCreds(store);
+  const { appId, secret } = await cashfreeCreds(store);
   const b = await readBody(req);
   const orderId = String(b.orderId ?? "");
   if (!ORDER_ID.test(orderId)) fail(400, "Invalid order");
   const amount = Math.round(Number(b.amount) * 100) / 100;
   if (!(amount >= 1 && amount <= 500000)) fail(400, "Amount must be between ₹1 and ₹5,00,000");
-  const phone = String(b.phone ?? "").replace(/\D/g, "").slice(-10);
-  if (!/^[6-9]\d{9}$/.test(phone)) fail(400, "A valid 10-digit mobile number is required");
-  const name = String(b.name ?? "").trim().slice(0, 100) || "Customer";
   const origin = requestOrigin(req);
-  const returnUrl = origin.startsWith("https://") ? `${origin}/payment/return/${orderId}` : "";
+  // Cashfree swaps {order_id} for the real id when it sends the customer back.
+  const returnUrl = origin.startsWith("https://") ? `${origin}/payment/return/{order_id}` : "";
   try {
-    return await createPaymentLink({
-      env: s.cashfreeEnv,
-      appId: s.cashfreeAppId,
-      secret: s.cashfreeSecret,
-      linkId: orderId,
+    return await createOrder({
+      appId,
+      secret,
+      orderId,
       amount,
-      name,
-      phone,
+      customer: customerFor({ name: b.name, phone: b.phone }),
       returnUrl,
     });
   } catch (e) {
@@ -473,11 +470,15 @@ async function startCashfree(req, store) {
 
 async function cashfreeStatus(store, orderId) {
   if (!ORDER_ID.test(orderId)) fail(400, "Invalid order");
-  const s = await cashfreeCreds(store);
+  const { appId, secret } = await cashfreeCreds(store);
   try {
-    const link = await fetchPaymentLink(s.cashfreeEnv, s.cashfreeAppId, s.cashfreeSecret, orderId);
-    if (!link) return { paid: false, status: "UNKNOWN" };
-    return { paid: linkIsPaid(link), status: link.link_status || "", amount: Number(link.link_amount) || 0 };
+    const order = await fetchOrder(appId, secret, orderId);
+    if (!order) return { paid: false, status: "UNKNOWN" };
+    return {
+      paid: orderIsPaid(order),
+      status: order.order_status || "",
+      amount: Number(order.order_amount) || 0,
+    };
   } catch (e) {
     fail(e.status || 502, e.message);
   }

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const secret = () => process.env.AUTH_SECRET || `kishoo:${process.env.DB_PASSWORD || ""}:${process.env.DB_NAME || ""}`;
+const secret = () => process.env.AUTH_SECRET || process.env.JWT_SECRET || `kishoo:${process.env.DB_PASSWORD || ""}:${process.env.DB_NAME || ""}`;
 const sign = (data) => crypto.createHmac("sha256", secret()).update(data).digest("base64url");
 
 export function createToken(admin) {
