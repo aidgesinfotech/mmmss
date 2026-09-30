@@ -19,35 +19,21 @@ function makeOrderId() {
 }
 
 // UPI deep-link builder
-// Each app has its own custom URI scheme for direct app opening.
-// On Android: phonepe: / tez: / paytmmp: open the specific app directly.
-// Fallback: generic upi:// shows the system app-chooser.
+// Exact format: phonepe:upi://pay?pa=<upiId>&pn=Online%20Shopping&am=<amount>&cu=INR&tn=OrderNo%3A%20<orderId>
+// Teeno apps (GPay, PhonePe, Paytm) mein yahi link fire hogi — dynamic UPI ID aur amount ke saath.
 function buildUpiUrl(appId, upiId, amount, orderId) {
-  const pa = encodeURIComponent(upiId);
+  void appId; // sabke liye same scheme — phonepe:upi://
+
+  const pa = encodeURIComponent(upiId);          // dynamic: settings.upiId
   const pn = "Online%20Shopping";
-  const am = Number(amount).toFixed(0);
-  const tn = encodeURIComponent(`OrderNo: ${orderId}`);
-  const params = `pa=${pa}&pn=${pn}&am=${am}&cu=INR&tn=${tn}`;
+  const am = Number(amount).toFixed(0);           // dynamic: cart total
+  const tn = `OrderNo%3A%20${orderId}`;          // OrderNo: <uuid>
 
-  // ⚡ Sabhi apps ke liye PhonePe scheme use karo
-  void appId;
-  return `phonepe://pay?${params}`;
+  // ✅ Exact format: phonepe:upi://pay?pa=...&pn=...&am=...&cu=INR&tn=...
+  return `phonepe:upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=INR&tn=${tn}`;
 }
 
-// Trigger a custom URI scheme without navigating the current page.
-// Creates a hidden <a> and clicks it — browser opens the UPI app,
-// then user comes back to this page with WaitingPopup still visible.
-function openUpiLink(url) {
-  const a = document.createElement("a");
-  a.href = url;
-  // target=_blank won't help for custom schemes on mobile, but
-  // the hidden-click approach prevents page navigation on all browsers.
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  // Clean up after a tick
-  setTimeout(() => document.body.removeChild(a), 500);
-}
+
 
 function fmt(sec) {
   const m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -230,13 +216,10 @@ export default function Payment() {
     // 3️⃣ Clear cart
     clearCart();
 
-    // 4️⃣ Open UPI app via hidden anchor click — does NOT navigate the page,
-    //    so WaitingPopup stays visible when user returns from UPI app.
+    // 4️⃣ UPI app ko seedha open karo — Pay Now click pe instant redirect
     const upiId = settings.upiId;
     if (upiId) {
-      const deepLink = buildUpiUrl(app, upiId, amount, orderId);
-      // Slight delay so React renders WaitingPopup first
-      setTimeout(() => openUpiLink(deepLink), 150);
+      window.location.href = buildUpiUrl(app, upiId, amount, orderId);
     }
   };
 
