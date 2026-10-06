@@ -102,6 +102,20 @@ export default function Settings() {
           </>
         )}
 
+        <div className="adm-field" style={{ marginTop: "20px", borderTop: "1px solid #eee", paddingTop: "15px" }}>
+          <span>Meta / FB Pixel ID or Code</span>
+          <textarea
+            value={s.pixelId || ""}
+            onChange={(e) => setS({ ...s, pixelId: e.target.value })}
+            placeholder="Enter Meta Pixel ID (e.g. 123456789012345) or full script code"
+            rows={3}
+            style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc", fontFamily: "monospace", fontSize: "13px" }}
+          />
+          <p className="adm-hint" style={{ marginTop: "4px" }}>
+            This Pixel Code is domain-specific and will run automatically for visitors on this domain.
+          </p>
+        </div>
+
         {error && <div className="adm-error">{error}</div>}
         <div className="adm-modal-foot">
           <button className="adm-btn primary" disabled={busy}>

@@ -15,6 +15,14 @@ const fail = (status, message) => {
 };
 
 function domainOf(req) {
+  try {
+    const url = new URL(req.url, "http://x");
+    const qDomain = url.searchParams.get("domain") || req.query?.domain;
+    if (qDomain) return String(qDomain).trim().toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+  } catch (e) {}
+  const storeHeader = req.headers["x-store-domain"];
+  if (storeHeader) return String(storeHeader).trim().toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+
   const raw = String(req.headers["x-forwarded-host"] || req.headers.host || "localhost").split(",")[0];
   return raw.trim().toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
 }
@@ -258,6 +266,9 @@ function settingsInput(b) {
     if (secret && (secret.length < 8 || secret.length > 256 || /[\r\n]/.test(secret))) fail(400, "Invalid Cashfree secret");
     out.cashfreeSecret = secret;
   }
+  if ("pixelId" in b) {
+    out.pixelId = String(b.pixelId ?? "").trim();
+  }
   return out;
 }
 
@@ -270,6 +281,7 @@ async function loadSettings(storeId) {
     paymentGateway: s.paymentGateway === "cashfree" ? "cashfree" : "upi",
     cashfreeAppId: s.cashfreeAppId || "",
     cashfreeSecret: s.cashfreeSecret || "",
+    pixelId: s.pixelId || "",
   };
   const keys = cashfreeKeys(out);
   out.cashfreeMode = keys ? cashfreeEnv(keys.appId, keys.secret) : "";
@@ -290,6 +302,7 @@ function publicSettings(s) {
     isPaytmEnable: s.isPaytmEnable,
     isPhonepeEnable: s.isPhonepeEnable,
     upiId: cashfree ? "" : s.upiId || "",
+    pixelId: s.pixelId || "",
   };
 }
 

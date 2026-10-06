@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { PRODUCTS } from "../src/data/store.js";
 
 let pool;
 
@@ -13,10 +14,17 @@ export function db() {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       // Serverless: every warm instance keeps its own pool, so keep it tiny.
-      connectionLimit: Number(process.env.DB_POOL_SIZE || 3),
+      connectionLimit: Number(process.env.DB_POOL_SIZE || 5),
       waitForConnections: true,
       enableKeepAlive: true,
       charset: "utf8mb4",
+      connectTimeout: 15000,
+    });
+    pool.on("error", (err) => {
+      console.error("[db pool error]", err);
+      if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ECONNRESET" || err.fatal) {
+        pool = null;
+      }
     });
   }
   return pool;
@@ -76,6 +84,7 @@ export const DEFAULT_SETTINGS = {
   paymentGateway: "upi",
   cashfreeAppId: "",
   cashfreeSecret: "",
+  pixelId: "",
 };
 
 export const DEFAULT_ADMIN = { username: "admin", password: "admin" };
@@ -95,28 +104,58 @@ const storeCache = new Map();
 
 // Returns the store row for a domain, creating + seeding it on first visit.
 export async function getStore(domain) {
-  if (storeCache.has(domain)) return storeCache.get(domain);
+  const normDomain = String(domain || "localhost").toLowerCase().trim().replace(/^www\./, "").replace(/:\d+$/, "");
+  if (storeCache.has(normDomain)) return storeCache.get(normDomain);
   await ensureSchema();
 
-  const [res] = await db().query("INSERT IGNORE INTO stores (domain, name) VALUES (?, ?)", [domain, domain]);
-  const [[store]] = await db().query("SELECT id, domain, name FROM stores WHERE domain = ?", [domain]);
-  if (res.affectedRows === 1) await seedStore(store.id);
-  else await ensureDefaults(store.id);
-
-  storeCache.set(domain, store);
-  return store;
+  await db().query("INSERT IGNORE INTO stores (domain, name) VALUES (?, ?)", [normDomain, normDomain]);
+  const [[store]] = await db().query("SELECT id, domain, name FROM stores WHERE domain = ?", [normDomain]);
+  
+  if (store) {
+    await seedStore(store.id);
+    storeCache.set(normDomain, store);
+    return store;
+  }
+  
+  throw new Error(`Could not load or create store for domain: ${normDomain}`);
 }
 
 async function ensureDefaults(storeId) {
-  await db().query("INSERT IGNORE INTO settings (store_id, setting_key, setting_value) VALUES ?", [
-    Object.entries(DEFAULT_SETTINGS).map(([k, v]) => [storeId, k, v]),
-  ]);
+  const rows = Object.entries(DEFAULT_SETTINGS).map(([k, v]) => [storeId, k, String(v)]);
+  if (rows.length) {
+    await db().query("INSERT IGNORE INTO settings (store_id, setting_key, setting_value) VALUES ?", [rows]);
+  }
   const [[{ n }]] = await db().query("SELECT COUNT(*) AS n FROM admins WHERE store_id = ?", [storeId]);
   if (!n) await db().query("INSERT INTO admins (store_id, username, password) VALUES (?, ?, ?)", [storeId, DEFAULT_ADMIN.username, DEFAULT_ADMIN.password]);
 }
 
 async function seedStore(storeId) {
   await ensureDefaults(storeId);
+
+  const [[{ count }]] = await db().query("SELECT COUNT(*) AS count FROM products WHERE store_id = ?", [storeId]);
+  if (Number(count) === 0 && Array.isArray(PRODUCTS) && PRODUCTS.length) {
+    const values = PRODUCTS.map((p, i) => [
+      storeId,
+      p.name,
+      p.price,
+      p.mrp,
+      p.category,
+      p.tag || "",
+      p.img,
+      JSON.stringify(p.images || [p.img]),
+      p.desc || "",
+      p.rating || 4.0,
+      p.reviews || 0,
+      i,
+      1,
+    ]);
+    if (values.length) {
+      await db().query(
+        "INSERT INTO products (store_id, name, price, mrp, category, tag, img, images, description, rating, reviews, sort_order, is_active) VALUES ?",
+        [values]
+      );
+    }
+  }
 }
 
 export { seedStore };
